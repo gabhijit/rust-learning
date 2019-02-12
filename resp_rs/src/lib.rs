@@ -15,7 +15,7 @@ impl Value {
 
     pub fn from_resp(input: &str) -> Result<Value, std::io::Error> {
 
-        let mut last =  Value::Null;
+        let mut last = Value::Null;
 
         for item in input.split("\r\n") {
             let result = Value::parse_item(item);
@@ -26,6 +26,12 @@ impl Value {
                 },
                 Ok(x) => {
                     println!("{:?}", x);
+                    match x {
+                        Value::Null => println!("Null"),
+                        Value::NullArray => println!("NullArray"),
+                        _ => println!("Neither"),
+                    }
+
                     last = x
                 },
             }
