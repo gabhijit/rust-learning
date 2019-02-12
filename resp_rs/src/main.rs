@@ -2,7 +2,7 @@
 use resp_rs;
 
 fn main() {
-    let _ = resp_rs::Value::from_resp("hello").unwrap();
+    let _ = resp_rs::Value::from_resp("$hello\r\n$world\r\n").unwrap();
     /* match result {
         Ok(result) => result,
         Err(Error) => Err(Error),
