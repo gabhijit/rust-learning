@@ -9,42 +9,35 @@ pub enum Value {
     NullArray,
     Number(i64),
     String(String),
+    Array(Vec<Value>),
 }
 
 impl Value {
 
     pub fn from_resp(input: &str) -> Result<Value, std::io::Error> {
 
-        let mut last = Value::Null;
+        let items: Vec<_> = input.split("\r\n").collect();
 
-        for item in input.split("\r\n") {
-            let result = Value::parse_item(item);
-            match result {
-                Err(err) =>  {
-                    println!("None");
-                    return Err(err)
-                },
-                Ok(x) => {
-                    println!("{:?}", x);
-                    match x {
-                        Value::Null => println!("Null"),
-                        Value::NullArray => println!("NullArray"),
-                        _ => println!("Neither"),
-                    }
+        println!("{:?}" , items);
+        for item in items.iter() {
 
-                    last = x
-                },
-            }
+            println!("Item: {}", item);
         }
-        Ok(last)
+        Ok(Value::Null)
     }
 
-    fn parse_item(item: &str) -> Result<Value, std::io::Error> {
-        match item {
-            "$-1" => Ok(Value::Null),
-            "*-1" => Ok(Value::NullArray),
-            _  => Ok(Value::String(String::from(item))),
+    fn parse_items(item: &Vec<str>) -> Result<Value, std::io::Error> {
+        let first = item.as_bytes().get(0);
+        match first {
+            Some(b'*') => println!("*"),
+            Some(b'$') => println!("$"),
+            Some(b':') => println!(":"),
+            Some(b'+') => println!("+"),
+            Some(b'-') => println!("-"),
+            None => println!("None"),
+            _ => println!("Nothing"),
         }
+        Ok(Value::Null)
     }
 
 }
