@@ -16,17 +16,28 @@ impl Value {
 
     pub fn from_resp(input: &str) -> Result<Value, std::io::Error> {
 
-        let items: Vec<_> = input.split("\r\n").collect();
+        let mut current = 0;
+        let curr_item = Value::Null;
+        let mut item = "";
 
-        println!("{:?}" , items);
-        for item in items.iter() {
+        loop {
+            let idx = input[current..].find("\r\n");
 
-            println!("Item: {}", item);
+            match idx {
+                Some(x) =>  {
+                    item = &input[current..current+x];
+                    current += x + 2;
+                    Value::parse_item(item);
+                },
+                None => {
+                    println!("None");
+                    Error::new(ErrorKind::UnexpectedEof, "String must end with '\r\n'");
+                },
+            }
         }
-        Ok(Value::Null)
     }
 
-    fn parse_items(item: &Vec<str>) -> Result<Value, std::io::Error> {
+    fn parse_item(item: &str) -> Result<Value, std::io::Error> {
         let first = item.as_bytes().get(0);
         match first {
             Some(b'*') => println!("*"),
