@@ -1,0 +1,7 @@
+[package]
+name = "fibonacci"
+version = "0.1.0"
+authors = ["Abhijit Gadgil <gabhijit@iitbombay.org>"]
+edition = "2018"
+
+[dependencies]
