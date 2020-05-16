@@ -21,19 +21,12 @@ impl Value {
         let mut item = "";
 
         loop {
-            let idx = input[current..].find("\r\n");
-
-            match idx {
-                Some(x) =>  {
+            let idx = input[current..].find("\r\n").and_then(|x| {
                     item = &input[current..current+x];
                     current += x + 2;
-                    Value::parse_item(item);
-                },
-                None => {
-                    println!("None");
-                    Error::new(ErrorKind::UnexpectedEof, "String must end with '\r\n'");
-                },
-            }
+                    Value::parse_item(item).ok()
+                }).or_else();
+            println!("{:?}", idx);
         }
     }
 
