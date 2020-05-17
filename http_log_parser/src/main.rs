@@ -13,6 +13,7 @@ use std::io::{self, BufRead};
 use std::fs;
 
 use std::vec::IntoIter;
+use std::collections::HashMap;
 
 // Deriving debug trait for {:?} printing
 #[derive(Debug)]
@@ -106,11 +107,44 @@ fn main() -> io::Result<()> {
         println!("Path does not exist.");
     }
 
-    let entries = parse_weblog_file(filename)?;
+    // A note about the following. I haven't got it yet. But
+    // If I try to make a hashmap of &str or &String, it's a bit involved
+    // It's better to make a HashMap that just 'owns' the corresponding
+    // values. May be after I figure out lifetimes, I can fix this.
+    // Idiomatic? Don't know.
+    let mut urls_entries: HashMap<String, u32> = HashMap::new();
+    let mut ips_entries: HashMap<String, u32> = HashMap::new();
+    let mut ips_data_xferred: HashMap<String, u32> = HashMap::new();
 
+    let entries = parse_weblog_file(filename)?;
     for entry in entries {
-        println!("{:?} ", entry);
+
+        let urls_count = urls_entries.entry(entry.url.clone()).or_insert(0);
+        *urls_count += 1;
+
+        let ip_count = ips_entries.entry(entry.ipaddress.clone()).or_insert(0);
+        *ip_count += 1;
+
+        let data_xferred = ips_data_xferred.entry(entry.ipaddress.clone()).or_insert(0);
+        *data_xferred += entry.transferred;
+
+        //println!("{:?} ", entry);
     }
+
+    let mut entries: Vec<(&String, &u32)> = ips_entries.iter().collect();
+    entries.sort_by(|a,b| a.1.cmp(b.1).reverse());
+    entries.truncate(5);
+    println!("{:?}", entries);
+
+    let mut entries: Vec<(&String, &u32)> = urls_entries.iter().collect();
+    entries.sort_by(|a,b| a.1.cmp(b.1).reverse());
+    entries.truncate(5);
+    println!("{:?}", entries);
+
+    let mut entries: Vec<(&String, &u32)> = ips_data_xferred.iter().collect();
+    entries.sort_by(|a,b| a.1.cmp(b.1).reverse());
+    entries.truncate(5);
+    println!("{:?}", entries);
 
     // Below will panic as unwrap is not allowed on None value
     // Only allowed on Some value
