@@ -11,7 +11,7 @@ fn main() {
         process::exit(1);
     });
 
-    // if let is more 'idiomatic' because we are doing nothing
+    // `if let` is more 'idiomatic' because we are doing nothing
     // with the `Ok` value. So it's a good idea to check for
     // existence of error using if let
     if let Err(err) = minigrep::run(config) {

@@ -1,7 +1,6 @@
 //! REdis Serialization Protocol implementation in Rust
 //!
 
-use std::io::{Error, ErrorKind};
 
 #[derive(Debug)]
 pub enum Value {
@@ -18,16 +17,21 @@ impl Value {
 
         let mut current = 0;
         let curr_item = Value::Null;
-        let mut item = "";
 
         loop {
-            let idx = input[current..].find("\r\n").and_then(|x| {
-                    item = &input[current..current+x];
-                    current += x + 2;
-                    Value::parse_item(item).ok()
-                }).or_else();
-            println!("{:?}", idx);
+            if let Some(idx) = input[current..].find("\r\n") {
+                println!("{:?}, {:?}, {:?}", idx, current, input.len());
+                if let Ok(x) = Value::parse_item(&input[current..current+idx]) {
+                    current = current + idx + 2;
+                    if current > input.len() {
+                        break;
+                    }
+                }
+            } else {
+                break;
+            }
         }
+        Ok(Value::Null)
     }
 
     fn parse_item(item: &str) -> Result<Value, std::io::Error> {
