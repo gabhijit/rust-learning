@@ -2,7 +2,10 @@
 use resp_rs;
 
 fn main() {
-    let _ = resp_rs::Value::from_resp("$hello\r\n$world\r\n").unwrap();
+    let result = resp_rs::Value::from_resp("$5\r\nhello\r\n").unwrap();
+    println!("{:?}", result);
+    let result = resp_rs::Value::from_resp("$-1\r\n").unwrap();
+    println!("{:?}", result);
     println!("Done!");
     /* match result {
         Ok(result) => result,

@@ -92,7 +92,7 @@ fn parse_weblog_file<P: AsRef<path::Path>>(filename: P) -> io::Result<IntoIter<H
 // Also note: the below defilnation `io::Result<()>` is actually a bit
 // interesting. Normally, we return the `std::result::Result` enum
 // io::Result<T> is actually a shortcut for
-// std::result::Result<T , io:Error>
+// std::result::Result<T , io::Error>
 //
 fn main() -> io::Result<()> {
     let filename = std::env::args()
