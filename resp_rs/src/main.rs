@@ -3,7 +3,7 @@ use resp_rs;
 
 fn main() {
 
-    let mut parser = resp_rs::RedisProtocolParser::new(b"*4\r\n*1\r\n:10\r\n$5\r\nhello\r\n$-1\r\n:42\r\n");
+    let mut parser = resp_rs::parser::RedisProtocolParser::new(b"*4\r\n*1\r\n:10\r\n$5\r\nhello\r\n$-1\r\n:42\r\n");
 
     let result = parser.parse().unwrap();
     println!("{:?}", result);
