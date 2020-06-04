@@ -1,6 +1,6 @@
 use std::str;
 
-use crate::value::{ Value, ValueError };
+use crate::value::{Value, ValueError};
 
 #[derive(Debug)]
 pub struct RedisProtocolParser<'a> {
@@ -24,32 +24,30 @@ impl<'a> RedisProtocolParser<'a> {
         self.index >= self.input.len()
     }
 
-    pub fn parse(&mut self) -> Result<(), ValueError> {
+    pub fn parse(&mut self) -> Result<Value, ValueError> {
+        let mut value = Value::NullBulkString;
         while !self.consumed() {
-            let value = self.parse_one_value()?;
-            println!("Parsed {:?}", value);
+            value = self.parse_one_value()?;
         }
 
-        Ok(())
+        Ok(value)
     }
 
     fn find_crlf(heystack: &[u8]) -> Option<usize> {
-
         let needle = &b"\r\n"[..];
 
         heystack.windows(needle.len()).position(|x| x == needle)
-
     }
 
     fn parse_one_value(&mut self) -> Result<Value, ValueError> {
-        println!("Consumed: {:?}", self.consumed());
-
         let text_str = &self.input[self.index..];
         let first = text_str.get(0);
         match first {
             Some(b'*') => self.parse_array(),
             Some(b'$') => self.parse_bulkstr(),
             Some(b':') => self.parse_integer(),
+            Some(b'+') => self.parse_simplestr(),
+            Some(b'-') => self.parse_errorstr(),
             _ => {
                 println!("First: {:?}", first);
                 Err(ValueError::new("Not Supported!"))
@@ -61,9 +59,7 @@ impl<'a> RedisProtocolParser<'a> {
         let text_str = &self.input[self.index..];
 
         if let Some(idx) = RedisProtocolParser::find_crlf(text_str) {
-            println!("index1: {}", self.index);
             self.advance(idx + 2);
-            println!("index2: {}", self.index);
 
             let s = str::from_utf8(&text_str[1..idx])?;
             let length = s.parse::<i32>()?;
@@ -72,9 +68,7 @@ impl<'a> RedisProtocolParser<'a> {
                 for _ in 0..length {
                     if let Ok(value) = self.parse_one_value() {
                         arr.push(value);
-                        println!("arr: {:?}, index: {:?}", arr, self.index);
                     } else {
-                        println!("arr: {:?}, idx: {:?}", arr, idx);
                         return Err(ValueError::new("Unable to parse value"));
                     }
                 }
@@ -91,21 +85,15 @@ impl<'a> RedisProtocolParser<'a> {
         let text_str = &self.input[self.index..];
 
         if let Some(idx) = RedisProtocolParser::find_crlf(text_str) {
-            println!("index3: {}", self.index);
             self.advance(idx + 2);
-            println!("index4: {}", self.index);
 
             let s = str::from_utf8(&text_str[1..idx])?;
             let length = s.parse::<i32>()?;
 
-            println!("{:?}", length);
-
             if length > 0 {
                 let strval = text_str[idx + 2..idx + 2 + length as usize].to_vec();
 
-                println!("index5: {}", self.index);
                 self.advance(length as usize + 2);
-                println!("index6: {}", self.index);
 
                 return Ok(Value::BulkString(strval));
             } else {
@@ -120,8 +108,7 @@ impl<'a> RedisProtocolParser<'a> {
         let text_str = &self.input[self.index..];
 
         if let Some(idx) = RedisProtocolParser::find_crlf(text_str) {
-
-            self.advance(idx+2);
+            self.advance(idx + 2);
 
             let s = str::from_utf8(&text_str[1..idx])?;
             let int = s.parse::<i64>()?;
@@ -132,4 +119,35 @@ impl<'a> RedisProtocolParser<'a> {
         Err(ValueError::new("Unable to Parse"))
     }
 
+    fn parse_simplestr(&mut self) -> Result<Value, ValueError> {
+        let text_str = &self.input[self.index..];
+
+        if let Some(idx) = RedisProtocolParser::find_crlf(text_str) {
+            self.advance(idx + 2);
+
+            let s = str::from_utf8(&text_str[1..idx])?;
+
+            if s.starts_with("OK") {
+                return Ok(Value::Okay);
+            } else {
+                return Ok(Value::SimpleString(String::from(s)));
+            }
+        }
+
+        Err(ValueError::new("Unable to Parse"))
+    }
+
+    fn parse_errorstr(&mut self) -> Result<Value, ValueError> {
+        let text_str = &self.input[self.index..];
+
+        if let Some(idx) = RedisProtocolParser::find_crlf(text_str) {
+            self.advance(idx + 2);
+
+            let s = str::from_utf8(&text_str[1..idx])?;
+
+            return Ok(Value::Error(String::from(s)));
+        }
+
+        Err(ValueError::new("Unable to Parse"))
+    }
 }

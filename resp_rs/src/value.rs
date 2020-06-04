@@ -9,9 +9,9 @@ pub enum Value {
     Error(String),
     Integer(i64),
     BulkString(Vec<u8>),
-    NullBulkString,       // Special case of BulkString "$-1\r\n"
+    NullBulkString, // Special case of BulkString "$-1\r\n"
     Array(Vec<Value>),
-    NullArray             // Special case of Array "*-1\r\n"
+    NullArray, // Special case of Array "*-1\r\n"
 }
 
 #[derive(Debug)]
@@ -49,7 +49,6 @@ impl From<std::num::ParseIntError> for ValueError {
 }
 
 impl From<str::Utf8Error> for ValueError {
-
     fn from(_: str::Utf8Error) -> ValueError {
         ValueError {
             cause: String::from("Unable to parse Utf8 String"),
