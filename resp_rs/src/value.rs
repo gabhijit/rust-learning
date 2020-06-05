@@ -2,7 +2,9 @@ use std::error::Error;
 use std::fmt;
 use std::str;
 
-#[derive(Debug)]
+// PartialEq is required to be `derived` for this Value otherwise
+// We cannot assert
+#[derive(Debug, PartialEq)]
 pub enum Value {
     SimpleString(String),
     Okay,
@@ -14,7 +16,7 @@ pub enum Value {
     NullArray, // Special case of Array "*-1\r\n"
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ValueError {
     cause: String,
 }

@@ -63,7 +63,7 @@ impl<'a> RedisProtocolParser<'a> {
 
             let s = str::from_utf8(&text_str[1..idx])?;
             let length = s.parse::<i32>()?;
-            if length > 0 {
+            if length >= 0 {
                 let mut arr = Vec::new();
                 for _ in 0..length {
                     if let Ok(value) = self.parse_one_value() {
