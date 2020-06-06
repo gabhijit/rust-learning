@@ -33,6 +33,11 @@ impl<'a> RedisProtocolParser<'a> {
         Ok(value)
     }
 
+    // Actually I was trying to use `next` and `peek`, but it turns out that's not a
+    // very good approach. So I instead followed the approach discussed in one of the
+    // comments of the following function. However - The actual 'accepted' answer
+    // is a pretty good one, to help better understand what is happening.
+    // https://stackoverflow.com/questions/62186871/how-to-correctly-use-peek-in-rust
     fn find_crlf(heystack: &[u8]) -> Option<usize> {
         let needle = &b"\r\n"[..];
 
