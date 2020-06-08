@@ -26,10 +26,15 @@ impl MySum<i32> for f32 {
     }
 }
 
-fn largest<T: PartialOrd>(list: &[T]) -> &T {
-    let mut largest = &list[0];
+// A couple of interesting points below, as long as T implements `Copy` trait, we are good. If we
+// remove the `+ Copy` part, we'll be required to get the `reference to list[0], but if T
+// implements 'Copy' trait, the value returned will be a `Copy` of the element and not a reference
+// to the element and hence will be allowed. Also, we should be returning the `Copy` and not the
+// `reference`.
+fn largest<T: PartialOrd + Copy>(list: &[T]) -> T {
+    let mut largest = list[0];
 
-    for item in list.iter() {
+    for &item in list.iter() {
         if item > largest {
             largest = item;
         }
@@ -42,9 +47,11 @@ fn main() {
     let numbers: Vec<i32> = vec![134, 50, 25, 100, 65];
 
     // If I uncomment the following, I am not allowed to do so because, once I borrow, I am not
-    // allowed to `move out` below in the `into_iter`. I guess, I should be able to fix this with
-    // the liftimes?
-    //let largest = largest(&numbers);
+    // allowed to `move out` below in the `into_iter`.
+    // This cannot be fixed with the lifetimes, Reason: if we returned a `reference` to largest
+    // element, subsequent `MySum::sum` , which 'consumes' the vector, that means reference to
+    // the `largest` element is invalid.
+    let largest = largest(&numbers);
 
     // `into_iter()` is important one, if we simply use `iter()`, it iterates over references that
     // is `&i32`. Now the problem with that is. This will require to change the implementation
@@ -55,5 +62,5 @@ fn main() {
     let sum: f32 = MySum::sum(numbers.into_iter());
 
     println!("The sum is {:?}", sum);
-    //println!("The sum is {:?}, largest number is {:?}", sum, largest);
+    println!("The sum is {:?}, largest number is {:?}", sum, largest);
 }
