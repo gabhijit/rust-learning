@@ -27,3 +27,9 @@ fn test_emptry_array_extra_chars() {
     assert_eq!( result.is_err(), true);
 }
 
+#[test]
+fn test_empty_string_error() {
+    let result = parser::RedisProtocolParser::new(b"").parse();
+
+    assert_eq!(result.is_err(), true);
+}

@@ -16,21 +16,27 @@ impl<'a> RedisProtocolParser<'a> {
         Self { input, index: 0 }
     }
 
-    pub fn advance(&mut self, howmuch: usize) -> () {
-        self.index += howmuch;
-    }
-
-    pub fn consumed(&self) -> bool {
-        self.index >= self.input.len()
-    }
-
     pub fn parse(&mut self) -> Result<Value, ValueError> {
         let mut value = Value::NullBulkString;
+
+        // FIXME : This can be better
+        if self.consumed() {
+            return Err(ValueError::new("Empty String"));
+        }
+
         while !self.consumed() {
             value = self.parse_one_value()?;
         }
 
         Ok(value)
+    }
+
+    fn advance(&mut self, howmuch: usize) -> () {
+        self.index += howmuch;
+    }
+
+    fn consumed(&self) -> bool {
+        self.index >= self.input.len()
     }
 
     // Actually I was trying to use `next` and `peek`, but it turns out that's not a
