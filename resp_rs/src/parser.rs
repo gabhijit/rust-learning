@@ -31,7 +31,7 @@ impl<'a> RedisProtocolParser<'a> {
         Ok(value)
     }
 
-    fn advance(&mut self, howmuch: usize) -> () {
+    fn advance(&mut self, howmuch: usize) {
         self.index += howmuch;
     }
 

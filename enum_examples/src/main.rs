@@ -1,4 +1,5 @@
 // playing around with Enums
+#![allow(dead_code)]
 
 #[derive(Debug)]
 struct IPv4Addr(u8, u8, u8, u8);
@@ -9,12 +10,12 @@ struct IPv6Addr;
 #[derive(Debug)]
 enum IPAddr {
     V4(IPv4Addr),
-    V6(IPv6Addr)
+    _V6(IPv6Addr)
 }
 
 #[derive(Debug)]
 enum Message {
-    QuitMessage,
+    Quit,
     ChangeColor(u32, u32, u32),
     Move { x: i32, y: i32},
     Write(String)
@@ -30,7 +31,7 @@ fn main() {
 
     println!("This is {:?}", ip);
 
-    let message = Message::QuitMessage;
+    let message = Message::Quit;
     println!("message is {:?}.", message);
 
     let color = Message::ChangeColor(1, 0, 2);

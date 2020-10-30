@@ -1,4 +1,4 @@
-
+#![allow(dead_code)]
 
 
 #[derive(Debug)]
@@ -21,18 +21,19 @@ struct S<'a> {
 
 // Following will work because everyone gets the same lifetime
 //
-fn largest_x<'a, 'b>(first: &'a S, second: &S<'b>) -> &'a u32 {
+fn largest_x<'a>(first: &'a S, second: &'a S) -> &'a u32
+{
 // fn largest_x<'a>(first: &S, second: &S) -> &'a u32 {
 
     if first.x > second.x {
         first.x
     } else {
-        first.x
+        second.x
     }
 }
 
 
-fn print_val<'a>(x: & str) {
+fn print_val(x: & str) {
     println!("{:?}", x);
 }
 
@@ -44,7 +45,7 @@ fn main() {
     let f: S;
 
     {
-        let mut x: u32 = 100;
+        let x: u32 = 100;
         f = S { x: &x};
 
         // If the following println! is moved out of block, since x goes out of scope,

@@ -1,5 +1,4 @@
 /// An Implementation of Redis Protocol
-use resp_rs;
 
 fn main() {
     let mut parser = resp_rs::parser::RedisProtocolParser::new(

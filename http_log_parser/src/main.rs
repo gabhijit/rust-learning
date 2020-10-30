@@ -69,8 +69,8 @@ fn parse_weblog_file<P: AsRef<path::Path>>(filename: P) -> io::Result<IntoIter<H
         let transferred = tokens[9];
 
         let entry = HTTPLogEntry {
-            ipaddress: ipaddress,
-            url: url,
+            ipaddress,
+            url,
             status_code: status_code.parse().unwrap(),
             transferred: transferred.parse().unwrap_or(0)
         };

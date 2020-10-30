@@ -21,8 +21,7 @@ impl MySum<i32> for f32 {
 
     // So Instead Following works - Type of `Item` specified.
     fn sum<I: Iterator<Item = i32>>(iter: I) -> Self {
-        let sum = iter.fold(0.0, |sum, x| sum + x as f32);
-        sum
+        iter.fold(0.0, |sum, x| sum + x as f32)
     }
 }
 

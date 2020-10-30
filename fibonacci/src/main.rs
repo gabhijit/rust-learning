@@ -5,16 +5,10 @@ fn main() {
 
 fn fib(i: u32) -> u32 {
 
-    if i == 0 {
-        return 1
-    }
-
-    if i == 1 {
-        return 1;
-    } else if i == 2 {
-        return 1;
+    if i > 2 {
+        fib(i-1) + fib(i-2)
     } else {
-        return fib(i-1) + fib(i-2);
+        1
     }
 }
 
@@ -27,7 +21,7 @@ fn fib_loop(i: u32) -> u32 {
     let mut cur = 0;
 
     if i == 1 || i == 2 {
-        return 1;
+        return 1
     }
 
     while count < i {

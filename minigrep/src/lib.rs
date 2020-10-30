@@ -22,7 +22,7 @@ impl Config {
         let filename = args[2].clone();
         let case_insensitive = env::var("CASE_INSENSITIVE").is_err();
 
-        return Ok(Config { query, filename, case_insensitive });
+        Ok(Config { query, filename, case_insensitive })
     }
 }
 
