@@ -1,6 +1,6 @@
 use hyper::{Client, Uri};
 
-async fn get_url() {
+pub async fn get_url() {
     let client = Client::new();
 
     let url = "http://registry-1.docker.io/v2/".parse::<Uri>().unwrap();

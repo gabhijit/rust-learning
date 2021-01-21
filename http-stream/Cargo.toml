@@ -10,5 +10,5 @@ edition = "2018"
 hyper = { version = "0.14", features = ["client", "runtime", "http1", "stream"]}
 hyper-tls = "0.5"
 tokio = { version = "1.0", features = ["macros", "rt"]}
-futures-util = { version = "0.3", features-default = false }
-futures-core = { version = "0.3", features-default = false }
+futures-util = { version = "0.3"}
+futures-core = { version = "0.3"}

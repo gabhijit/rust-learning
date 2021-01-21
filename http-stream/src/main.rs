@@ -1,11 +1,5 @@
-use futures_core::stream::Stream;
 use futures_util::StreamExt;
-use hyper::{
-    body::to_bytes,
-    body::{Body, HttpBody},
-    client::HttpConnector,
-    Client as HyperClient, Error as HyperError, Request, Response, Uri,
-};
+use hyper::{body::Body, client::HttpConnector, Client as HyperClient, Uri};
 use hyper_tls::HttpsConnector;
 
 #[tokio::main(flavor = "current_thread")]
@@ -25,10 +19,11 @@ async fn main() {
 
     println!("Hello, world! {:?}", response);
 
-    futures_util::pin_mut!(response);
+    let mut body = response.into_body();
+    //futures_util::pin_mut!(response);
 
-    let mut chunks = 0;
-    while let Some(data) = response.data().await {
+    let mut chunks: usize = 0;
+    while let Some(data) = body.next().await {
         println!(
             "Data: {} {}",
             data.map_err(|e| format!("Error: {}", e)).unwrap().len(),
