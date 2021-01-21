@@ -1,12 +1,24 @@
 use std::convert::TryFrom;
+use std::error::Error as StdError;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Copy, Clone)]
+struct Error(usize);
+
+impl StdError for Error {}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Error: {}", self.0)
+    }
+}
+
+#[derive(Copy, Clone, Debug, Default)]
 struct Bar {
     value: u8,
 }
 
 impl TryFrom<u8> for Bar {
-    type Error = std::io::Error;
+    type Error = Error;
 
     fn try_from(x: u8) -> Result<Self, Self::Error> {
         Ok(Bar { value: x })
@@ -14,17 +26,15 @@ impl TryFrom<u8> for Bar {
 }
 
 impl TryFrom<&str> for Bar {
-    type Error = std::io::Error;
+    type Error = Error;
 
     fn try_from(x: &str) -> Result<Self, Self::Error> {
-        let x = x
-            .parse::<u8>()
-            .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, format!("{}", x)))?;
+        let x = x.parse::<u8>().map_err(|_| Error(42))?;
         Ok(Bar { value: x })
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Copy, Clone, Debug, Default)]
 struct Foo {
     bar: Bar,
 }
@@ -35,9 +45,9 @@ impl Foo {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 struct Builder {
-    inner: Result<Foo, std::io::Error>,
+    inner: Result<Foo, Error>,
 }
 
 impl Builder {
@@ -50,7 +60,7 @@ impl Builder {
     fn bar<T>(self, bar: T) -> Self
     where
         Bar: TryFrom<T>,
-        <Bar as TryFrom<T>>::Error: Into<std::io::Error>,
+        <Bar as TryFrom<T>>::Error: Into<Error>,
     {
         self.and_then(move |mut x| {
             println!("x: {:?}", x);
@@ -60,13 +70,13 @@ impl Builder {
         })
     }
 
-    fn build(self) -> Result<Foo, std::io::Error> {
+    fn build(self) -> Result<Foo, Error> {
         self.inner
     }
 
     fn and_then<F>(self, f: F) -> Self
     where
-        F: FnOnce(Foo) -> Result<Foo, std::io::Error>,
+        F: FnOnce(Foo) -> Result<Foo, Error>,
     {
         Builder {
             inner: self.inner.and_then(f),
@@ -76,14 +86,13 @@ impl Builder {
 
 fn main() {
     println!("Foo {:?}", Foo::builder().build().map_err(|_| "Hello"));
+
+    let foo = Foo::builder();
     println!(
         "Foo {:?}",
-        Foo::builder().bar(42).build().map_err(|_| "Hello")
+        foo.bar(42).bar("84").build().map_err(|_| "Hello")
     );
-    println!(
-        "Foo {:?}",
-        Foo::builder().bar("22").build().map_err(|_| "Hello")
-    );
+    println!("Foo {:?}", foo.bar("22").build().map_err(|_| "Hello"));
     println!(
         "Foo {:?}",
         Foo::builder().bar("bar").build().map_err(|_| "Hello")
