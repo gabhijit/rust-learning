@@ -34,7 +34,7 @@ impl TryFrom<&str> for Bar {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 struct Foo {
     bar: Bar,
 }
@@ -57,13 +57,13 @@ impl Builder {
         }
     }
 
-    fn bar<T>(self, bar: T) -> Self
+    fn bar<T>(self, bar: T, y: usize) -> Self
     where
         Bar: TryFrom<T>,
         <Bar as TryFrom<T>>::Error: Into<Error>,
     {
         self.and_then(move |mut x| {
-            println!("x: {:?}", x);
+            println!("x, y : {:?}, {}", x, y);
             x.bar = TryFrom::try_from(bar).map_err(Into::into)?;
             Ok(x)
             //uOk(Foo::default())
@@ -78,9 +78,9 @@ impl Builder {
     where
         F: FnOnce(Foo) -> Result<Foo, Error>,
     {
-        Builder {
-            inner: self.inner.and_then(f),
-        }
+        let inner = self.inner.and_then(f);
+        println!("Inside and_then {:?}", self.inner);
+        Builder { inner }
     }
 }
 
@@ -88,13 +88,10 @@ fn main() {
     println!("Foo {:?}", Foo::builder().build().map_err(|_| "Hello"));
 
     let foo = Foo::builder();
+    println!("Foo {:?}", foo.bar("42", 1).build().map_err(|_| "Hello"));
+    println!("Foo {:?}", foo.bar("22", 1).build().map_err(|_| "Hello"));
     println!(
         "Foo {:?}",
-        foo.bar(42).bar("84").build().map_err(|_| "Hello")
-    );
-    println!("Foo {:?}", foo.bar("22").build().map_err(|_| "Hello"));
-    println!(
-        "Foo {:?}",
-        Foo::builder().bar("bar").build().map_err(|_| "Hello")
+        Foo::builder().bar("bar", 1).build().map_err(|_| "Hello")
     );
 }
