@@ -16,8 +16,8 @@ fn k_th<T>(collection: &mut [T], k: usize, mut low: usize, mut high: usize) -> u
 where
     T: PartialOrd + Copy + std::fmt::Display + std::fmt::Debug,
 {
-    while (high > low) {
-        let mut i = partition(collection, low, high);
+    while high > low {
+        let i = partition(collection, low, high);
         if i == k {
             break;
         } else if i > k {
@@ -39,7 +39,6 @@ where
     let pivot = collection[low];
 
     println!("low: {}, hi: {}", low, high);
-    let mut x: T;
     loop {
         while collection[i] <= pivot {
             if i == high {
@@ -58,15 +57,10 @@ where
         if i >= j {
             break;
         }
-        x = collection[i];
-        collection[i] = collection[j];
-        collection[j] = x;
+        collection.swap(i, j);
     }
 
-    x = collection[low];
-    collection[low] = collection[j];
-    collection[j] = x;
-
+    collection.swap(low, j);
     j
 }
 
@@ -74,11 +68,11 @@ fn main() {
     println!("Hello, world!");
 
     let mut array = vec![2, 4, 1, 3, 7, -1, 10, 11, 23, 22, -9];
-    //let mut array = [1; 100000];
+    // let mut array = [1; 100000];
     let high = array.len() - 1;
 
     println!("{:#?}", array);
-    let x = k_th(&mut array, 5, 0, high);
+    let x = k_th(&mut array, 8, 0, high);
     println!("{:#?}", array);
 
     println!("{:#?}", array[x]);
