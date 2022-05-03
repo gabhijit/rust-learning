@@ -19,7 +19,7 @@ fn main() {
     let b = "foo".to_owned();
     let s = Struct {};
 
-    let t = (a, b);
+    let _t = (a, b.clone());
     s.do_something(&(a, b.clone())); // This works...
     println!("{}", b); // ...but the borrow checker complains here
 }
