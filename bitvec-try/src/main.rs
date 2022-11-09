@@ -1,11 +1,22 @@
 use bitvec::prelude::*;
 
 fn main() {
-    let bv: BitVec<Msb0, u8> = bitvec![Msb0, u8;  1, 1, 0, 0, 0, 0, 0, 0];
+    let bv: BitVec<u8, Msb0> = bitvec![u8, Msb0;  1, 1, 0, 0, 0, 0, 0, 0];
     let value = bv.load_be::<u128>() as i8;
     println!("bits_as_i8: {}", value);
     let value = bv.load_be::<u128>() as i16;
     println!("bits_as_i16: {}", value);
+
+    let name = "John";
+    println!(
+        "name::as_bits: {:#?}",
+        name.chars()
+            .map(|c| BitSlice::<_, Msb0>::from_element(&(c as u8))[1..].to_bitvec())
+            .collect::<Vec<_>>()
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>()
+    );
 
     let numbers: Vec<i128> = vec![
         140737488355328,
