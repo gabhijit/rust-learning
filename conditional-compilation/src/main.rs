@@ -4,7 +4,6 @@ fn arch_x86_only() {
 }
 
 fn main() {
-
     #[cfg(target_arch = "x86")]
     arch_x86_only();
 

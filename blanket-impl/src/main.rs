@@ -1,9 +1,6 @@
-
 trait Animal {
-
-    fn speaks(&self) -> String ;
+    fn speaks(&self) -> String;
 }
-
 
 // One will often come across the code like following and it is pretty
 // difficult to 'understand' what is happening below implement a Trait for
@@ -15,7 +12,7 @@ trait Animal {
 // pass the lifetimes without which the following code won't compile.
 impl<'a, A> Animal for &'a A
 where
-    A: Animal
+    A: Animal,
 {
     fn speaks(&self) -> String {
         (**self).speaks()
@@ -24,7 +21,7 @@ where
 
 impl<A> Animal for Box<A>
 where
-    A: Animal
+    A: Animal,
 {
     fn speaks(&self) -> String {
         (**self).speaks()
@@ -33,12 +30,12 @@ where
 
 #[derive(Debug)]
 struct Cat {
-    name: String
+    name: String,
 }
 
 #[derive(Debug)]
 struct Dog {
-    name: String
+    name: String,
 }
 
 impl Animal for Dog {
@@ -47,39 +44,40 @@ impl Animal for Dog {
     }
 }
 
-
 #[derive(Debug)]
 struct Man<T>
 where
-    T: Animal
+    T: Animal,
 {
-    pet: Option<T>
+    pet: Option<T>,
 }
 
 impl<T: Animal> Man<T> {
-
     fn new(_pet: Option<T>) -> Self {
         Self { pet: _pet }
     }
-
 }
 
 impl<T: Animal> Animal for Man<&T> {
-
     fn speaks(&self) -> String {
         String::from("Hellos!")
     }
 }
 
 fn main() {
-
     let maybe_dogowner: Man<&Dog> = Man::new(None);
 
-    let bruno = Dog { name : "Bruno".to_string() };
+    let bruno = Dog {
+        name: "Bruno".to_string(),
+    };
 
-    let milo = Dog { name : "Milo".to_string() };
+    let milo = Dog {
+        name: "Milo".to_string(),
+    };
 
-    let shira = Box::new(Dog { name: "Shira".to_string()} );
+    let shira = Box::new(Dog {
+        name: "Shira".to_string(),
+    });
 
     // It is okay to do Some(value) as well as Some(reference) because
     // Trait Animal is implemented for for both The value Dog and
@@ -97,5 +95,4 @@ fn main() {
     println!("{:?}", dogtrainer);
     println!("{:?}", boxed_dog_refowner);
     println!("{:?}", boxed_dogowner);
-
 }
