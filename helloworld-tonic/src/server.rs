@@ -1,21 +1,13 @@
 #![allow(clippy::useless_conversion)]
-use tonic::{
-    transport::Server,
-    Request, Response, Status
-};
+use tonic::{transport::Server, Request, Response, Status};
 
-use hello_world::greeter_server::{
-    Greeter, GreeterServer
-};
+use hello_world::greeter_server::{Greeter, GreeterServer};
 
-use hello_world::{
-    HelloRequest, HelloReply
-};
+use hello_world::{HelloReply, HelloRequest};
 
 pub mod hello_world {
     tonic::include_proto!("helloworld");
 }
-
 
 #[derive(Debug, Default)]
 pub struct MyGreeter {}
@@ -25,21 +17,19 @@ impl Greeter for MyGreeter {
     async fn say_hello(
         &self,
         request: Request<HelloRequest>,
-        ) -> Result<Response<HelloReply>, Status> {
-            println!("Got a request {:?}", request);
+    ) -> Result<Response<HelloReply>, Status> {
+        println!("Got a request {:?}", request);
 
-            let reply = hello_world::HelloReply {
-                message: format!("Hello {}!", request.into_inner().name).into(),
-            };
+        let reply = hello_world::HelloReply {
+            message: format!("Hello {}!", request.into_inner().name).into(),
+        };
 
-            Ok(Response::new(reply))
+        Ok(Response::new(reply))
     }
 }
 
-
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     let addr = "[::1]:50051".parse()?;
     let greeter = MyGreeter::default();
 
@@ -50,5 +40,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
-
