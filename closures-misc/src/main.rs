@@ -9,5 +9,4 @@ pub struct Wrapper<T> {
 
 fn main() {
     let wrapper: Wrapper<_> = Wrapper { elem: adder(5) };
-    eprintln!("Wrapper: {:#?}", wrapper);
 }
