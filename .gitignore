@@ -3,3 +3,5 @@
 **/err
 **/core
 **/x
+**/Cargo.lock
+**/e
