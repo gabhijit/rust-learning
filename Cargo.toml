@@ -1,4 +1,4 @@
 [workspace]
 
-members = ["*"]
-exclude  = ["target", ".git", "notes", "hello_world", "trait-any"]
+members = ["*", "openapi-experiments/openapiv3", "openapi-experiments/sbi5g/temp"]
+exclude  = ["target", ".git", "notes", "hello_world", "trait-any", "openapi-experiments", "blog_os", "serde-experiments"]
