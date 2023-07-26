@@ -9,11 +9,11 @@ use std::path;
 // on the BuffReader. If we don't use it, we cannot use the `lines` method
 // compiler croaks. Also this {self} for std::io:: means we can use
 // std::io (the top level module)
-use std::io::{self, BufRead};
 use std::fs;
+use std::io::{self, BufRead};
 
-use std::vec::IntoIter;
 use std::collections::HashMap;
+use std::vec::IntoIter;
 
 // Deriving debug trait for {:?} printing
 #[derive(Debug)]
@@ -21,7 +21,7 @@ struct HTTPLogEntry {
     ipaddress: String,
     url: String,
     status_code: u16,
-    transferred: u32
+    transferred: u32,
 }
 
 // In the following function we could return a Vector of &HTTPLogEntry,
@@ -48,7 +48,6 @@ struct HTTPLogEntry {
 // We are returning io::Result for the same reasons, we want to use the short-cut
 // '?' operator on most I/O.
 fn parse_weblog_file<P: AsRef<path::Path>>(filename: P) -> io::Result<IntoIter<HTTPLogEntry>> {
-
     let mut http_entries = Vec::new();
 
     let f = fs::File::open(filename)?;
@@ -72,16 +71,14 @@ fn parse_weblog_file<P: AsRef<path::Path>>(filename: P) -> io::Result<IntoIter<H
             ipaddress,
             url,
             status_code: status_code.parse().unwrap(),
-            transferred: transferred.parse().unwrap_or(0)
+            transferred: transferred.parse().unwrap_or(0),
         };
 
         http_entries.push(entry);
-
     }
 
     Ok(http_entries.into_iter())
 }
-
 
 // We have made the return type of this function as io:Result<()>
 // Because, we want to use short-cuts like `?` operator. Below
@@ -95,9 +92,7 @@ fn parse_weblog_file<P: AsRef<path::Path>>(filename: P) -> io::Result<IntoIter<H
 // std::result::Result<T , io::Error>
 //
 fn main() -> io::Result<()> {
-    let filename = std::env::args()
-        .nth(1)
-        .expect("Please provide a filename");
+    let filename = std::env::args().nth(1).expect("Please provide a filename");
 
     println!("Filename is {}", filename);
 
@@ -118,7 +113,6 @@ fn main() -> io::Result<()> {
 
     let entries = parse_weblog_file(filename)?;
     for entry in entries {
-
         let urls_count = urls_entries.entry(entry.url.clone()).or_insert(0);
         *urls_count += 1;
 
@@ -132,17 +126,17 @@ fn main() -> io::Result<()> {
     }
 
     let mut entries: Vec<(&String, &u32)> = ips_entries.iter().collect();
-    entries.sort_by(|a,b| a.1.cmp(b.1).reverse());
+    entries.sort_by(|a, b| a.1.cmp(b.1).reverse());
     entries.truncate(5);
     println!("{:?}", entries);
 
     let mut entries: Vec<(&String, &u32)> = urls_entries.iter().collect();
-    entries.sort_by(|a,b| a.1.cmp(b.1).reverse());
+    entries.sort_by(|a, b| a.1.cmp(b.1).reverse());
     entries.truncate(5);
     println!("{:?}", entries);
 
     let mut entries: Vec<(&String, &u32)> = ips_data_xferred.iter().collect();
-    entries.sort_by(|a,b| a.1.cmp(b.1).reverse());
+    entries.sort_by(|a, b| a.1.cmp(b.1).reverse());
     entries.truncate(5);
     println!("{:?}", entries);
 

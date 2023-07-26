@@ -71,9 +71,9 @@ fn good_arc_example_pass1() {
     let good_arc_map_clone = Arc::clone(&good_arc_map);
     let join_handle = thread::spawn(move || {
         eprintln!("I:1");
-        let mut inside_map = good_arc_map.lock();
+        let inside_map = good_arc_map.lock();
         eprintln!("I:2");
-        if let Ok(ref mut m) = inside_map {
+        if let Ok(mut m) = inside_map {
             m.insert(2_i32, "Hello".to_string());
         }
     });
@@ -86,7 +86,7 @@ fn good_arc_example_pass1() {
     // spawned thread to run to completion and then update the map in the main thread.
 
     // commenting following line causes deadlock. You will almost always observe this.
-    thread::sleep(Duration::from_millis(10));
+    // thread::sleep(Duration::from_millis(10));
 
     eprintln!("O:1");
     let mut outside_map = good_arc_map_clone.lock();
