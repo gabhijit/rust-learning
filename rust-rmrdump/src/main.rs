@@ -52,6 +52,25 @@ impl RouteTable {
         }
     }
 
+    pub fn lookup(&self, ip_address: &str) -> Option<u32> {
+        let ip_address = ip_address.parse::<Ipv4Addr>().unwrap();
+        let octets = ip_address.octets();
+
+        let mut table = &self.level0_table;
+        for (i, _) in Self::TABLE_SIZES.iter().enumerate() {
+            let (index, _) = Self::get_index_span_from_prefix_length(octets, 32, i);
+            let entry = &table.0[index];
+            if entry.r#final {
+                return Some(entry.output_index);
+            } else if let Some(next_table) = &entry.children {
+                table = next_table
+            } else {
+                return None;
+            }
+        }
+        None
+    }
+
     pub fn add(&mut self, prefix: &str, length: u8, destination_idx: u32) {
         let prefix_octets = prefix.parse::<Ipv4Addr>().unwrap();
         let prefix_octets = prefix_octets.octets();
@@ -86,10 +105,17 @@ impl RouteTable {
             let mut entry = &mut table.0[index + i as usize];
             if length <= prefix_length {
                 eprintln!("length: {length}, prefix_length: {prefix_length}, index: {index}, i: {i}, level: {level}");
-                entry.r#final = true;
                 entry.index = index + i as usize;
-                entry.prefix_length = length;
-                entry.output_index = destination_idx;
+                if entry.r#final {
+                    if length > entry.prefix_length {
+                        entry.prefix_length = length;
+                        entry.output_index = destination_idx;
+                    }
+                } else {
+                    entry.r#final = true;
+                    entry.prefix_length = length;
+                    entry.output_index = destination_idx;
+                }
             } else if entry.children.is_some() {
                 let inner_table = entry.children.as_mut().unwrap();
                 Self::add_in_table(
@@ -157,7 +183,14 @@ impl RouteTable {
 fn main() {
     let mut route_table = RouteTable::new();
 
+    route_table.add("12.0.16.0", 20, 2004);
     route_table.add("12.0.2.0", 23, 2002);
+    route_table.add("12.0.2.0", 24, 2003);
+    route_table.add("12.0.1.0", 24, 2001);
 
     eprintln!("{:#?}", route_table);
+
+    println!("lookup('12.0.1.22'): {:?}", route_table.lookup("12.0.1.22"));
+    println!("lookup('12.0.2.22'): {:?}", route_table.lookup("12.0.2.22"));
+    println!("lookup('12.0.3.22'): {:?}", route_table.lookup("12.0.3.22"));
 }
