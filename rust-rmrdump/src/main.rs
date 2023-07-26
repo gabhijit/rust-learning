@@ -5,14 +5,24 @@ use pyo3::prelude::*;
 #[pyclass]
 #[derive(Debug, Default, Clone)]
 struct RouteEntry {
-    final_: bool,
+    r#final: bool,
+    index: usize,
     prefix_length: u8,
     output_index: u32,
     children: Option<RouteEntryTable>,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Default, Clone)]
 struct RouteEntryTable(Vec<RouteEntry>);
+
+impl std::fmt::Debug for RouteEntryTable {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(fmt, "RouteEntryTable: ")?;
+        fmt.debug_list()
+            .entries(self.0.iter().filter(|e| e.r#final || e.children.is_some()))
+            .finish()
+    }
+}
 
 #[pyclass]
 #[derive(Debug, Default)]
@@ -33,11 +43,12 @@ impl RouteTable {
 
     pub fn new() -> Self {
         let entries = vec![RouteEntry::default(); 65536];
-        let mut level0_table = RouteEntryTable(entries);
+        let level0_table = RouteEntryTable(entries);
+        let route_entries_allocated = 65536;
 
         Self {
             level0_table,
-            route_entries_allocated: 0,
+            route_entries_allocated,
         }
     }
 
@@ -45,8 +56,9 @@ impl RouteTable {
         let prefix_octets = prefix.parse::<Ipv4Addr>().unwrap();
         let prefix_octets = prefix_octets.octets();
 
-        let mut table = &mut self.level0_table;
-        let added = Self::add_in_table(&mut table, prefix_octets, length, destination_idx, 0);
+        let table = &mut self.level0_table;
+        self.route_entries_allocated +=
+            Self::add_in_table(table, prefix_octets, length, destination_idx, 0);
     }
 
     fn add_in_table(
@@ -55,16 +67,11 @@ impl RouteTable {
         length: u8,
         destination_idx: u32,
         level: usize,
-    ) {
+    ) -> u32 {
         let table_size_prefix = &Self::TABLE_SIZES[level];
-        let table_size = table_size_prefix.0;
         let prefix_length = table_size_prefix.1;
 
-        let (index, span) = Self::get_index_span_from_prefix_length(
-            prefix_octets,
-            length,
-            level.try_into().unwrap(),
-        );
+        let (index, span) = Self::get_index_span_from_prefix_length(prefix_octets, length, level);
 
         eprintln!("index: {index}, span: {span}");
         let next_size = if level < 3 {
@@ -74,42 +81,45 @@ impl RouteTable {
         };
 
         let mut i = 0;
+        let mut entries_allocated = 0;
         loop {
-            let mut entry = &mut table.0[index as usize + i as usize];
+            let mut entry = &mut table.0[index + i as usize];
             if length <= prefix_length {
                 eprintln!("length: {length}, prefix_length: {prefix_length}, index: {index}, i: {i}, level: {level}");
-                entry.final_ = true;
+                entry.r#final = true;
+                entry.index = index + i as usize;
                 entry.prefix_length = length;
                 entry.output_index = destination_idx;
+            } else if entry.children.is_some() {
+                let inner_table = entry.children.as_mut().unwrap();
+                Self::add_in_table(
+                    inner_table,
+                    prefix_octets,
+                    length,
+                    destination_idx,
+                    level + 1,
+                );
             } else {
-                if entry.children.is_some() {
-                    let mut inner_table = entry.children.as_mut().unwrap();
-                    Self::add_in_table(
-                        &mut inner_table,
-                        prefix_octets,
-                        length,
-                        destination_idx,
-                        level + 1,
-                    );
-                } else {
-                    let mut inner_table =
-                        RouteEntryTable(vec![RouteEntry::default(); next_size as usize]);
+                let mut inner_table =
+                    RouteEntryTable(vec![RouteEntry::default(); next_size as usize]);
 
-                    Self::add_in_table(
-                        &mut inner_table,
-                        prefix_octets,
-                        length,
-                        destination_idx,
-                        level + 1,
-                    );
-                    entry.children = Some(inner_table);
-                }
+                Self::add_in_table(
+                    &mut inner_table,
+                    prefix_octets,
+                    length,
+                    destination_idx,
+                    level + 1,
+                );
+                entry.index = index + i as usize;
+                entry.children = Some(inner_table);
+                entries_allocated += next_size;
             }
             i += 1;
             if i >= span {
                 break;
             }
         }
+        entries_allocated
     }
 
     fn get_index_span_from_prefix_length(
@@ -120,8 +130,8 @@ impl RouteTable {
         let levels: [u8; 4] = [16, 24, 28, 32];
         let level_edges: [(usize, usize); 4] = [(0, 2), (2, 3), (3, 4), (3, 4)];
 
-        let (begin, end) = level_edges[level as usize];
-        let level_offset = levels[level as usize];
+        let (begin, end) = level_edges[level];
+        let level_offset = levels[level];
 
         let span = if prefix_length > level_offset {
             1
@@ -131,7 +141,7 @@ impl RouteTable {
 
         let mut index = 0;
         for (i, value) in prefix_octets[begin..end].iter().rev().enumerate() {
-            index = index + (1 << (8 * i)) * *value as usize;
+            index += (1 << (8 * i)) * *value as usize;
         }
 
         index = match level {
