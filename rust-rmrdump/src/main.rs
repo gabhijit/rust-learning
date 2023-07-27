@@ -83,6 +83,37 @@ impl RouteTable {
             Self::add_in_table(table, prefix_octets, length, destination_idx, 0);
     }
 
+    pub fn delete(&mut self, prefix: &str, length: u8) {
+        let prefix = prefix.parse::<Ipv4Addr>().unwrap();
+        let octets = prefix.octets();
+
+        let table = &mut self.level0_table;
+        Self::delete_from_table(table, octets, length, 0);
+    }
+
+    fn delete_from_table(table: &mut RouteEntryTable, octets: [u8; 4], length: u8, level: usize) {
+        let table_size_prefix = &Self::TABLE_SIZES[level];
+        let prefix_length = table_size_prefix.1;
+
+        let (index, span) = Self::get_index_span_from_prefix_length(octets, length, level);
+        let mut i = 0;
+        loop {
+            let mut entry = &mut table.0[index + i];
+            if length <= prefix_length {
+                entry.r#final = false;
+                entry.prefix_length = 0;
+                entry.output_index = 0;
+            } else {
+                let inner_table = &mut entry.children.as_mut().unwrap();
+                Self::delete_from_table(inner_table, octets, length, level + 1);
+            }
+            i += 1;
+            if i >= span.into() {
+                break;
+            }
+        }
+    }
+
     fn add_in_table(
         table: &mut RouteEntryTable,
         prefix_octets: [u8; 4],
@@ -203,6 +234,30 @@ fn main() {
         "lookup('12.0.17.22'): {:?}",
         route_table.lookup("12.0.17.22")
     );
+    println!("lookup('11.0.1.32'): {:?}", route_table.lookup("11.0.1.32"));
+    println!("lookup('11.0.1.24'): {:?}", route_table.lookup("11.0.1.24"));
+    println!("lookup('11.0.1.15'): {:?}", route_table.lookup("11.0.1.15"));
+
+    route_table.delete("11.0.1.16", 28);
+    println!("After deleting 11.0.1.16/28");
+    println!("lookup('11.0.1.24'): {:?}", route_table.lookup("11.0.1.24"));
+    println!("lookup('11.0.1.15'): {:?}", route_table.lookup("11.0.1.15"));
+
+    route_table.add("11.0.1.16", 28, 2006);
+    println!("After Adding 11.0.1.16/28 again");
+    println!("lookup('11.0.1.24'): {:?}", route_table.lookup("11.0.1.24"));
+    println!("lookup('11.0.1.15'): {:?}", route_table.lookup("11.0.1.15"));
+
+    route_table.delete("11.0.1.0", 24);
+    println!("After deleting 11.0.1.0/24");
+    println!("lookup('11.0.1.32'): {:?}", route_table.lookup("11.0.1.32"));
+    println!("lookup('11.0.1.24'): {:?}", route_table.lookup("11.0.1.24"));
+    println!("lookup('11.0.1.15'): {:?}", route_table.lookup("11.0.1.15"));
+
+    route_table.add("11.0.1.0", 24, 2005);
+    route_table.delete("11.0.1.16", 28);
+    route_table.delete("11.0.1.8", 29);
+    println!("After Adding 11.0.1.0/24 again and deleting 11.0.1.16/28, 11.0.1.8/29.");
     println!("lookup('11.0.1.32'): {:?}", route_table.lookup("11.0.1.32"));
     println!("lookup('11.0.1.24'): {:?}", route_table.lookup("11.0.1.24"));
     println!("lookup('11.0.1.15'): {:?}", route_table.lookup("11.0.1.15"));
