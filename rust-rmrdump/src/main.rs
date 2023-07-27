@@ -106,6 +106,13 @@ impl RouteTable {
             } else {
                 let inner_table = &mut entry.children.as_mut().unwrap();
                 Self::delete_from_table(inner_table, octets, length, level + 1);
+                if inner_table
+                    .0
+                    .iter()
+                    .all(|e| !e.r#final && e.children.is_none())
+                {
+                    let _ = entry.children.take();
+                }
             }
             i += 1;
             if i >= span.into() {
