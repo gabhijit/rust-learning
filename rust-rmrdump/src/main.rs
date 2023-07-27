@@ -57,18 +57,21 @@ impl RouteTable {
         let octets = ip_address.octets();
 
         let mut table = &self.level0_table;
+        let mut best_match = None;
         for (i, _) in Self::TABLE_SIZES.iter().enumerate() {
             let (index, _) = Self::get_index_span_from_prefix_length(octets, 32, i);
             let entry = &table.0[index];
             if entry.r#final {
-                return Some(entry.output_index);
-            } else if let Some(next_table) = &entry.children {
+                best_match = Some(entry.output_index);
+            }
+
+            if let Some(next_table) = &entry.children {
                 table = next_table
             } else {
-                return None;
+                break;
             }
         }
-        None
+        best_match
     }
 
     pub fn add(&mut self, prefix: &str, length: u8, destination_idx: u32) {
@@ -104,7 +107,6 @@ impl RouteTable {
         loop {
             let mut entry = &mut table.0[index + i as usize];
             if length <= prefix_length {
-                eprintln!("length: {length}, prefix_length: {prefix_length}, index: {index}, i: {i}, level: {level}");
                 entry.index = index + i as usize;
                 if entry.r#final {
                     if length > entry.prefix_length {
@@ -187,10 +189,21 @@ fn main() {
     route_table.add("12.0.2.0", 23, 2002);
     route_table.add("12.0.2.0", 24, 2003);
     route_table.add("12.0.1.0", 24, 2001);
+    route_table.add("11.0.1.0", 24, 2005);
+    route_table.add("11.0.1.16", 28, 2006);
+    route_table.add("11.0.1.8", 29, 2007);
 
     eprintln!("{:#?}", route_table);
 
     println!("lookup('12.0.1.22'): {:?}", route_table.lookup("12.0.1.22"));
     println!("lookup('12.0.2.22'): {:?}", route_table.lookup("12.0.2.22"));
     println!("lookup('12.0.3.22'): {:?}", route_table.lookup("12.0.3.22"));
+    println!("lookup('12.0.8.22'): {:?}", route_table.lookup("12.0.8.22"));
+    println!(
+        "lookup('12.0.17.22'): {:?}",
+        route_table.lookup("12.0.17.22")
+    );
+    println!("lookup('11.0.1.32'): {:?}", route_table.lookup("11.0.1.32"));
+    println!("lookup('11.0.1.24'): {:?}", route_table.lookup("11.0.1.24"));
+    println!("lookup('11.0.1.15'): {:?}", route_table.lookup("11.0.1.15"));
 }
