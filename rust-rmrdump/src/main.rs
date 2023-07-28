@@ -88,15 +88,21 @@ impl RouteTable {
         let octets = prefix.octets();
 
         let table = &mut self.level0_table;
-        Self::delete_from_table(table, octets, length, 0);
+        self.route_entries_allocated -= Self::delete_from_table(table, octets, length, 0);
     }
 
-    fn delete_from_table(table: &mut RouteEntryTable, octets: [u8; 4], length: u8, level: usize) {
+    fn delete_from_table(
+        table: &mut RouteEntryTable,
+        octets: [u8; 4],
+        length: u8,
+        level: usize,
+    ) -> u32 {
         let table_size_prefix = &Self::TABLE_SIZES[level];
         let prefix_length = table_size_prefix.1;
 
         let (index, span) = Self::get_index_span_from_prefix_length(octets, length, level);
         let mut i = 0;
+        let mut deleted_entries = 0;
         loop {
             let mut entry = &mut table.0[index + i];
             if length <= prefix_length {
@@ -104,14 +110,16 @@ impl RouteTable {
                 entry.prefix_length = 0;
                 entry.output_index = 0;
             } else {
-                let inner_table = &mut entry.children.as_mut().unwrap();
-                Self::delete_from_table(inner_table, octets, length, level + 1);
-                if inner_table
-                    .0
-                    .iter()
-                    .all(|e| !e.r#final && e.children.is_none())
-                {
-                    let _ = entry.children.take();
+                if let Some(ref mut inner_table) = entry.children {
+                    Self::delete_from_table(inner_table, octets, length, level + 1);
+                    if inner_table
+                        .0
+                        .iter()
+                        .all(|e| !e.r#final && e.children.is_none())
+                    {
+                        deleted_entries += inner_table.0.len() as u32;
+                        let _ = entry.children.take();
+                    }
                 }
             }
             i += 1;
@@ -119,6 +127,7 @@ impl RouteTable {
                 break;
             }
         }
+        deleted_entries
     }
 
     fn add_in_table(
@@ -268,4 +277,24 @@ fn main() {
     println!("lookup('11.0.1.32'): {:?}", route_table.lookup("11.0.1.32"));
     println!("lookup('11.0.1.24'): {:?}", route_table.lookup("11.0.1.24"));
     println!("lookup('11.0.1.15'): {:?}", route_table.lookup("11.0.1.15"));
+
+    route_table.delete("11.0.1.0", 24);
+    route_table.delete("12.0.16.0", 20);
+    route_table.delete("12.0.2.0", 23);
+    route_table.delete("12.0.2.0", 24);
+    route_table.delete("12.0.1.0", 24);
+
+    eprintln!("{:#?}", route_table);
+
+    drop(route_table);
+    let mut route_table = RouteTable::new();
+
+    route_table.add("12.0.16.0", 20, 2004);
+    eprintln!("{:#?}", route_table);
+
+    route_table.delete("12.0.16.0", 20);
+    eprintln!("{:#?}", route_table);
+
+    route_table.delete("12.0.16.0", 20);
+    eprintln!("{:#?}", route_table);
 }
