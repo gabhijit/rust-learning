@@ -5,11 +5,11 @@ use pyo3::prelude::*;
 #[pyclass]
 #[derive(Debug, Default, Clone)]
 struct RouteEntry {
-    r#final: bool,
-    index: usize,
-    prefix_length: u8,
-    output_index: u32,
     children: Option<RouteEntryTable>,
+    index: usize,
+    output_index: u32,
+    prefix_length: u8,
+    r#final: bool,
 }
 
 #[pyclass]
@@ -147,7 +147,7 @@ impl RouteTable {
 
         let (index, span) = Self::get_index_span_from_prefix_length(prefix_octets, length, level);
 
-        eprintln!("index: {index}, span: {span}");
+        //eprintln!("index: {index}, span: {span}");
         let next_size = if level < 3 {
             Self::TABLE_SIZES[level + 1].0
         } else {

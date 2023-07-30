@@ -1,4 +1,4 @@
-use rust_rmrdump::RouteTable;
+use rust_mrtdump::RouteTable;
 
 fn main() {
     let mut route_table = RouteTable::new();
