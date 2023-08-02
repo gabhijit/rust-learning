@@ -1,5 +1,8 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    mpsc::{self, Receiver, Sender},
+    Arc, Mutex,
+};
 use std::thread;
 use std::time::Duration;
 
@@ -8,6 +11,7 @@ fn main() {
     bad_arc_example_improved();
     good_arc_example_pass1();
     good_arc_example();
+    even_better_no_arc_example();
 }
 // In the following bad_arc_example, both the maps `inside_map` (spawned in thread ) as well as
 // `outside_map` (from main thread) will return `None` in `get_mut`. This is because the map is
@@ -133,4 +137,44 @@ fn good_arc_example() {
     // But since `outside_map` is dropped, already we need to get the reference to the map again
     // through `Mutex` (by calling `.lock().unwrap()`
     eprintln!("final_map: {:#?}", good_arc_map_clone.lock().unwrap());
+}
+
+// Even Better: Don't update the hashmap simultaneously. Use channels to send across the data that
+// is to be updated and update the hashmap only in one thread.
+fn even_better_no_arc_example() {
+    eprintln!("even_better_no_arc_example");
+
+    #[allow(dead_code)]
+    #[derive(Debug)]
+    enum ChannelData {
+        Valid(i32, String),
+        Eof,
+    }
+
+    let mut map: HashMap<i32, String> = HashMap::new();
+
+    let (sender, receiver): (Sender<ChannelData>, Receiver<ChannelData>) = mpsc::channel();
+
+    let join_handle = thread::spawn(move || {
+        let _ = sender.send(ChannelData::Valid(0, "Hello".to_string()));
+        eprintln!("I:1");
+
+        // sender dropped here.
+    });
+
+    loop {
+        if let Ok(received) = receiver.recv() {
+            match received {
+                ChannelData::Valid(i, s) => map.insert(i, s),
+                ChannelData::Eof => break,
+            };
+        } else {
+            eprintln!("sender dropped!");
+            break;
+        }
+    }
+
+    eprintln!("map: {:#?}", map);
+
+    let _ = join_handle.join();
 }
